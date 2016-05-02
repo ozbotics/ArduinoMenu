@@ -19,11 +19,11 @@ www.r-site.net
     public:
     Print& device;
     menuPrint(Print& device):device(device) {}
-    virtual void clearLine(int ln) {}
+    virtual void clearLine(int8_t ln) {}
     virtual void clear() {device.println("");device.println("");}
-    virtual void setCursor(int x,int y) {device.println("");}
+    virtual void setCursor(int8_t x,int8_t y) {device.println("");}
     virtual size_t write(uint8_t ch) {return device.write(ch);}
-		virtual void printPrompt(prompt &o,bool selected,int idx,int posY,int width) {
+		virtual void printPrompt(prompt &o,bool selected,int8_t idx,int8_t posY,int8_t width) {
       print(idx<10?" ":"");
       print((unsigned long)idx);
 			print(selected?(o.enabled?menu::enabledCursor:menu::disabledCursor):' ');
@@ -33,7 +33,7 @@ www.r-site.net
 		virtual void printMenu(menu& m,bool drawExit) {
 			if (drawn==&m&&m.sel==lastSel) return;
 			clear();
-			int i=0;
+			int8_t i=0;
 			for(;i<m.sz;i++)
 			  printPrompt(*m.data[i],i==m.sel,i+1,i-top,m.width);
 			if (drawExit) printPrompt(menu::exitOption,m.sel==m.sz,0,i-top,m.width);
@@ -43,5 +43,4 @@ www.r-site.net
 		}
   };
   
-#endif RSITE_ARDUINOP_MENU_PRINT
-
+#endif  //RSITE_ARDUINOP_MENU_PRINT

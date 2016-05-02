@@ -17,40 +17,57 @@ www.r-site.net
   #include <LiquidCrystal.h>
 	#include "menu.h"
 
-  class menuLCD:public menuOut {
-    public:
+class menuLCD:public menuOut {
+  public:
     LiquidCrystal& lcd;
-    menuLCD(LiquidCrystal& lcd,int x=16,int y=1):lcd(lcd),menuOut(x,y) {}
-    virtual void clearLine(int ln) {
+    menuLCD(LiquidCrystal& lcd,int8_t x=16,int8_t y=1):lcd(lcd),menuOut(x,y) {}
+    
+    virtual void clearLine(int8_t ln) {
     	setCursor(0,ln);
-    	for(int n=0;n<maxX;n++) print(' ');
+    	for(int8_t n=0;n<maxX;n++) 
+        print(' ');
+      
     	setCursor(0,ln);
     }
+    
     virtual void clear() {lcd.clear();}
-    virtual void setCursor(int x,int y) {lcd.setCursor(x*resX,y*resY);}
+    
+    virtual void setCursor(int8_t x,int8_t y) {lcd.setCursor(x*resX,y*resY);}
+    
     virtual size_t write(uint8_t ch) {return lcd.write(ch);}
-		virtual void printPrompt(prompt &o,bool selected,int idx,int posY,int width) {
+    
+		virtual void printPrompt(prompt &o,bool selected,int8_t idx,int8_t posY,int8_t width) {
 			clearLine(posY);
-			print(selected?(o.enabled?menu::enabledCursor:menu::disabledCursor):' ');
+      
+			print(selected ? (o.enabled ? menu::enabledCursor : menu::disabledCursor) : ' ');
 			o.printTo(*this);
 		}
+    
 		virtual void printMenu(menu& m,bool drawExit) {
+    
 			if (drawn!=&m) clear();//clear screen when changing menu
-			if (m.sel-top>=maxY) top=m.sel-maxY+1;//selected option outside device (bottom)
-			else if (m.sel<top) top=m.sel;//selected option outside device (top)
-			int i=0;for(;i<m.sz;i++) {
+
+      top = 0;
+      if (m.sel >= (top + maxY)) {
+        top = m.sel - maxY + 1;
+      }
+    
+      int8_t i=0;
+      for(i=0;i<m.sz;i++) {
 				if ((i>=top)&&((i-top)<maxY)) {
 				  if (needRedraw(m,i)) {
 				  	printPrompt(*m.data[i],i==m.sel,i+1,i-top,m.width);
 				  }
 				}
-			}
-			if (drawExit&&i-top<maxY&&needRedraw(m,i))
+      }
+      
+			if (drawExit&&i-top<maxY&&needRedraw(m,i)) {
 				printPrompt(menu::exitOption,m.sel==m.sz,0,i-top,m.width);
+      }
+      
 			lastTop=top;
 			lastSel=m.sel;
 			drawn=&m;
 		}
-  };
-#endif RSITE_ARDUINOP_MENU_LCD
-
+};
+#endif //RSITE_ARDUINOP_MENU_LCD

@@ -19,13 +19,17 @@ the menu system will read provided stream for input, it works for Serial,
 encoders, joysticks, keyboards (or touch?) a stream must be made out of them
 www.r-site.net
 */
+
 #ifndef RSITE_ARDUINO_MENU_SYSTEM
   #define RSITE_ARDUINO_MENU_SYSTEM
   
 	#include <Stream.h>
 	#include <HardwareSerial.h>
 	//#include <Flash.h>
-
+	#include <Timer.h>
+  #include <Value.h>
+  #include <ValueProgmemString.h>
+  
 	//#include <streamFlow.h>
 	
   class prompt;
@@ -53,7 +57,7 @@ www.r-site.net
   #define FOR_EACH_6(what, x, ...)\
     what(x)\
     FOR_EACH_5(what,  __VA_ARGS__)
-  #define FOR_EACH_7(what, x, ...)\
+    #define FOR_EACH_7(what, x, ...)\
     what(x)\
     FOR_EACH_6(what,  __VA_ARGS__)
   #define FOR_EACH_8(what, x, ...)\
@@ -135,96 +139,122 @@ www.r-site.net
   #define DEF_VALUE(id) &id
   #define DEF_VALUE_(cnt,...) &choice##cnt
   
-  /////////////////////////////////////////////////////////
-  // menu pure virtual output device, use derived
-  // this base class represents the output device either derived to serial, LCD or other
-  class menuOut:public Print {
-    public:
-    
+/////////////////////////////////////////////////////////
+// menu pure virtual output device, use derived
+// this base class represents the output device either derived to serial, LCD or other
+class menuOut:public Print {
+  public:
     menu* drawn;//last drawn menu, avoiding clear/redraw on each nav. change
-    int top;//top for this device
-    //device size (in characters)
-    int maxX;
-    int maxY;
-    //device resolution (pixels per character)
-    int resX;
-    int resY;
-    //preventing uneeded redraws
-    int lastTop=-1;
-    int lastSel=-1;
+    int8_t top;//top for this device
     
-    inline menuOut(int x=0x7F,int y=0x7F,int resX=1,int resY=1)
-    	:maxX(x),maxY(y),top(0),resX(resX),resY(resY),drawn(0) {}
+    //device size (in characters)
+    int8_t maxX;
+    int8_t maxY;
+    
+    //device resolution (pixels per character)
+    int8_t resX;
+    int8_t resY;
+    
+    //preventing uneeded redraws
+    int8_t lastTop;
+    int8_t lastSel;
+    
+    inline menuOut(int8_t x=0x7F,int8_t y=0x7F,int8_t resX=1,int8_t resY=1) : maxX(x), maxY(y), top(0), resX(resX), resY(resY), drawn(0), lastTop(-1), lastSel(-1) {}
 
-    enum drawStyle {NORMAL=0,SELECTED,EDITING,TUNNING,DISABLED};
-  	
+    enum drawStyle {NORMAL=0, SELECTED, EDITING, TUNNING, DISABLED};
+  
   //member functions
     virtual size_t write(uint8_t) = 0;
-    bool needRedraw(menu& m,int i);
-    virtual void clearLine(int ln)=0;
+    bool needRedraw(menu& m, int8_t i);
+    virtual void clearLine(int8_t ln)=0;
     virtual void clear()=0;
-    virtual void setCursor(int x,int y)=0;
-    virtual void printPrompt(prompt &o,bool selected,int idx,int posY,int width);
-		virtual void printMenu(menu&,bool drawExit)=0;
-  };
-  
-  ////////////////////////////////////////////////////////////////////
-  // menu structure
-  
-  //an associated function to be called on menu selection
-  //associated functions can accept no parameters 
-  // or accept some of the standard parameters preserving the order
-  // standard parameters (for this menu lib) are:
-  // prompt -> the associated prompt object that trigged the call
-  // menuOut -> the device we were using to display the menu.. you migh want to draw on it
-  // Stream -> the input stream we are using to play the menu, can be a serial or an encoder or keyboard stream
-	class promptAction {
-	public:
-		typedef void (*callback)(prompt &p, menuOut &o, Stream &i);//callback fynction type
-		callback hFn;//the hooked callback function
-		//cast no arguments or partial arguments to be accepted as promptActions
-		inline promptAction() {}
-		inline promptAction(void (*f)()):hFn((callback)f) {}
-		inline promptAction(void (*f)(prompt&)):hFn((callback)f) {}
-		inline promptAction(void (*f)(prompt&,menuOut&)):hFn((callback)f) {}
-		inline promptAction(callback f):hFn(f) {}
-		//use this objects as a function (replacing functions)
-		inline void operator()(prompt &p, menuOut &o, Stream &i) {hFn(p,o,i	);}
-	};
-	
-	//holds a menu option
-	//a menu is also a prompt so we can have sub-menus
-  class prompt {
-    public:
-    const char* text;
-    static void nothing() {}
-    promptAction action=nothing;
+    virtual void setCursor(int8_t x, int8_t y)=0;
+    virtual void printPrompt(prompt &o, bool selected, int8_t idx, int8_t posY, int8_t width);
+    virtual void printMenu(menu&, bool drawExit)=0;
+};
+
+////////////////////////////////////////////////////////////////////
+// menu structure
+//an associated function to be called on menu selection
+//associated functions can accept no parameters 
+// or accept some of the standard parameters preserving the order
+// standard parameters (for this menu lib) are:
+// prompt -> the associated prompt object that trigged the call
+// menuOut -> the device we were using to display the menu.. you migh want to draw on it
+// Stream -> the input stream we are using to play the menu, can be a serial or an encoder or keyboard stream
+class promptAction {
+  public:
+    typedef void (*callback)(prompt &p, menuOut &o, Stream &i);//callback fynction type
+    
+    callback hFn;//the hooked callback function
+    
+    //cast no arguments or partial arguments to be accepted as promptActions
+    inline promptAction() {}
+    inline promptAction(void (*f)()) : hFn((callback)f) {}
+    inline promptAction(void (*f)(prompt&)) : hFn((callback)f) {}
+    inline promptAction(void (*f)(prompt&, menuOut&)) : hFn((callback)f) {}
+    inline promptAction(callback f) : hFn(f) {}
+    //use this objects as a function (replacing functions)
+    inline void operator()(prompt &p, menuOut &o, Stream &i) {hFn(p, o, i	);}
+};
+
+//holds a menu option
+//a menu is also a prompt so we can have sub-menus
+class prompt {
+  public:
+    ValueBase* label;
+    
+    promptAction action;
     bool enabled;
-    inline prompt(const char * text):text(text),enabled(true) {}
-    inline prompt(const char * text,promptAction action)
-    	:text(text),action(action),enabled(true) {}
+    //static char labelBuffer[21];
+    
+    
+    inline prompt(ValueBase* label) : label(label), enabled(true), action(nothing) {}
+    inline prompt(ValueBase* label, promptAction action) : label(label), action(action), enabled(true) {}
+    inline prompt(ValueBase* label, bool enabled) : label(label), action(action), enabled(enabled) {}
+
+    
     virtual void printTo(menuOut& p) {
-			p.print(text);
-		}
-    virtual void activate(menuOut& p,Stream&c,bool) {
-    	action(*this,p,c);
+      char labelBuffer[21];
+      label->getValueString(labelBuffer);
+      p.print(labelBuffer);
     }
+    
+    virtual void activate(menuOut& p, Stream&c, bool) {
+#ifdef DEBUG_MENU
+      Serial.println(F("prompt.."));
+#endif
+
+      action(*this, p, c);
+    }
+    
     virtual bool isMenu() const {return false;}
-  };
-  
-  class menuNode:public prompt {//some basic information for menus and fields
-  	public:
-    int width=32;//field or menu width
+    static void nothing() {}
+
+};
+
+
+
+class menuNode : public prompt {//some basic information for menus and fields
+  public:
+    int8_t width;//field or menu width
+    int8_t ox, oy;//coordinate origin displacement
     //navigation and focus control
     static menuNode* activeNode;
-    menu* previousMenu=NULL;
-    inline menuNode(const char * text):prompt(text) {}
-    inline menuNode(const char * text,promptAction action):prompt(text,action) {}
-  };
-  
-  //a menu or sub-menu
-  class menu:public menuNode {
-    public:
+    class menu* previousMenu;
+    
+    inline menuNode(ValueBase* label) : prompt(label), ox(0), oy(0), width(32), previousMenu(NULL) {}
+
+    inline menuNode(ValueBase* label, promptAction action) : prompt(label, action), ox(0), oy(0), width(32) {}
+};
+
+//a menu or sub-menu
+class menu : public menuNode {
+  protected:
+    Timer* _timer;
+    static const int refreshDelay = 250;
+
+  public:
     static char escCode;
     static char enterCode;
     static char upCode;
@@ -233,22 +263,32 @@ www.r-site.net
     static char enabledCursor;//character to be used as navigation cursor
     static char disabledCursor;//to be used when navigating over disabled options
     static prompt exitOption;//option to append to menu allowing exit when no escape button/key is available
-    const int sz=0;
-    int sel;//selection
+    const int8_t sz;
+    int8_t sel;//selection
+    //prompt* const* data;// PROGMEM;
     prompt* const* data;// PROGMEM;
-    bool canExit=false;//store last canExit value for inner reference
-    menu(const char * text,int sz,prompt* const data[]):menuNode(text),sz(sz),data(data) {}
+    bool canExit;//store last canExit value for inner reference
     
-    int menuKeys(menuOut &p,Stream& c,bool drawExit);
-    inline void printMenu(menuOut& p,bool drawExit) {
-    	p.printMenu(*this,drawExit);
+    menu(ValueBase* label, int8_t sz, prompt* const data[]) : menuNode(label), sz(sz), data(data), canExit(false), sel(0) {
+      _timer = new Timer();
     }
+    ~menu() {
+      delete _timer;
+    }
+    inline void setPosition(int8_t x, int8_t y) { ox=x; oy=y; }
+    
+    int8_t menuKeys(menuOut &p,Stream& c,bool drawExit);
+    
+    inline void printMenu(menuOut& p,bool drawExit) {
+      p.printMenu(*this,drawExit);
+    }
+    
     
     void activate(menuOut& p,Stream& c,bool canExit=false);
     
     void poll(menuOut& p,Stream& c,bool canExit=false);
    
     virtual bool isMenu() const {return true;}
-  };
+};
 
 #endif
