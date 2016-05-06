@@ -45,7 +45,7 @@ public:
   int anyKeyPressed() {
     boolean ret=false;
     for(int n=0;n<N;n++) {
-      if (buttons[n].button->isPressed()) {
+      if (buttons[n].button->pressed) {
         ret = true;
         break;
       }
@@ -95,7 +95,7 @@ public:
 
   int peek(void) {
     for(int n=0;n<N;n++) {
-      if (buttons[n].button->isPressed()) {
+      if (buttons[n].button->pressed) {
         return buttons[n].code; 
       }
     }
