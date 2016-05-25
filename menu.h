@@ -242,8 +242,9 @@ class menuNode : public prompt {//some basic information for menus and fields
     //navigation and focus control
     static menuNode* activeNode;
     class menu* previousMenu;
+    class menu* previousPreviousMenu;
     
-    inline menuNode(ValueBase* label) : prompt(label), ox(0), oy(0), width(32), previousMenu(NULL) {}
+    inline menuNode(ValueBase* label) : prompt(label), ox(0), oy(0), width(32), previousMenu(NULL), previousPreviousMenu(NULL) {}
 
     inline menuNode(ValueBase* label, promptAction action) : prompt(label, action), ox(0), oy(0), width(32) {}
 };

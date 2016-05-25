@@ -221,6 +221,7 @@ class menuPage : public menu {
       
     virtual void onEnter(menuOut& p, Stream& c, bool canExit) {
       this->setPosition(menuNode::activeNode->ox, menuNode::activeNode->oy);
+      this->menu::previousPreviousMenu=(menu*)menu::previousMenu;
       this->menu::previousMenu=(menu*)menu::activeNode;
       menu::activeNode=this;
       this->canExit=canExit;
