@@ -168,7 +168,7 @@ template<typename T>
 class menuChoice : public menuSelect<T> { 
   
   public:
-		menuChoice(ValueBase* label, byte sz, menuValue<T>* const data[], Value<T> * setting): force_exit(false), menuSelect<T>(setting, label, sz, data) {
+		menuChoice(ValueBase* label, byte sz, menuValue<T>* const data[], Value<T> * setting): menuSelect<T>(setting, label, sz, data) {
       menuSelect<T>::sync();
     }
       
@@ -179,9 +179,8 @@ class menuChoice : public menuSelect<T> {
 				menu::activeNode=this;
 			 	this->canExit=canExit;
         
-        if (force_exit) {
-          force_exit = false;
-          
+        if (this->force_exit) {
+          this->force_exit = false;
         }
 			}
 			byte op=-1;
@@ -290,6 +289,21 @@ class timeoutPage : public menuPage {
     }
 
 };
+
+class confirmedTimeoutPage : public timeoutPage { 
+  public:
+    confirmedTimeoutPage(ValueBase* label, byte sz, prompt* const data[], unsigned long timerDelay) : timeoutPage(label, sz, data, timerDelay) {}
+      
+    /**
+     * over-ride onExit to force parent menu to exit to its parent 
+     *   skipping Confirmation menu on the way out
+     */
+    virtual void onExit(menuOut& p, Stream& c, bool canExit) {
+      this->menu::previousMenu->forceExit = true;
+      this->menu::activeNode=this->menu::previousMenu;
+    }
+};
+    
 
 class messagePrompt : public prompt {//some basic information for menus and fields
   public:
