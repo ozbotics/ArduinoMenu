@@ -166,9 +166,11 @@ class menuSelect : public menu {
 
 template<typename T>
 class menuChoice : public menuSelect<T> { 
+  
   public:
-		menuChoice(ValueBase* label, byte sz, menuValue<T>* const data[], Value<T> * setting):
-	    menuSelect<T>(setting, label, sz, data) {menuSelect<T>::sync();}
+		menuChoice(ValueBase* label, byte sz, menuValue<T>* const data[], Value<T> * setting): force_exit(false), menuSelect<T>(setting, label, sz, data) {
+      menuSelect<T>::sync();
+    }
       
 		void activate(menuOut& p, Stream& c, bool canExit) {
 			if (menu::activeNode!=this) {
@@ -176,6 +178,11 @@ class menuChoice : public menuSelect<T> {
 				this->menu::previousMenu=(menu*)menu::activeNode;
 				menu::activeNode=this;
 			 	this->canExit=canExit;
+        
+        if (force_exit) {
+          force_exit = false;
+          
+        }
 			}
 			byte op=-1;
 			menu::printMenu(p, false);
@@ -221,7 +228,6 @@ class menuPage : public menu {
       
     virtual void onEnter(menuOut& p, Stream& c, bool canExit) {
       this->setPosition(menuNode::activeNode->ox, menuNode::activeNode->oy);
-      this->menu::previousPreviousMenu=(menu*)menu::previousMenu;
       this->menu::previousMenu=(menu*)menu::activeNode;
       menu::activeNode=this;
       this->canExit=canExit;

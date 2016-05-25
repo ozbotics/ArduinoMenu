@@ -136,7 +136,13 @@ void menu::activate(menuOut& p, Stream& c, bool canExit) {
 
   printMenu(p, canExit);
   
-  op=menuKeys(p, c, canExit);
+  if (forceExit) {
+    forceExit = false;
+    op=-1;
+  }  
+  else {
+    op=menuKeys(p, c, canExit);
+  }
   
 #ifdef DEBUG_MENU
   if (op > -2) {

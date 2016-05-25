@@ -242,9 +242,8 @@ class menuNode : public prompt {//some basic information for menus and fields
     //navigation and focus control
     static menuNode* activeNode;
     class menu* previousMenu;
-    class menu* previousPreviousMenu;
     
-    inline menuNode(ValueBase* label) : prompt(label), ox(0), oy(0), width(32), previousMenu(NULL), previousPreviousMenu(NULL) {}
+    inline menuNode(ValueBase* label) : prompt(label), ox(0), oy(0), width(32), previousMenu(NULL) {}
 
     inline menuNode(ValueBase* label, promptAction action) : prompt(label, action), ox(0), oy(0), width(32) {}
 };
@@ -269,8 +268,9 @@ class menu : public menuNode {
     //prompt* const* data;// PROGMEM;
     prompt* const* data;// PROGMEM;
     bool canExit;//store last canExit value for inner reference
+    bool forceExit;
     
-    menu(ValueBase* label, int8_t sz, prompt* const data[]) : menuNode(label), sz(sz), data(data), canExit(false), sel(0) {
+    menu(ValueBase* label, int8_t sz, prompt* const data[]) : menuNode(label), sz(sz), data(data), canExit(false), sel(0), forceExit(false) {
       _timer = new Timer();
     }
     ~menu() {
@@ -283,6 +283,7 @@ class menu : public menuNode {
     inline void printMenu(menuOut& p,bool drawExit) {
       p.printMenu(*this,drawExit);
     }
+    
     
     
     void activate(menuOut& p,Stream& c,bool canExit=false);
