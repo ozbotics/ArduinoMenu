@@ -36,7 +36,7 @@ menuNode* menuNode::activeNode=NULL;
 
 
 bool prompt::shouldBeEnabled() { 
-  return true; 
+  return enabled; 
 }
 
 
