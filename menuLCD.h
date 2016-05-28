@@ -44,7 +44,6 @@ class menuLCD:public menuOut {
 		}
     
 		virtual void printMenu(menu& m,bool drawExit) {
-    
 			if (drawn!=&m) clear();//clear screen when changing menu
 
       top = 0;

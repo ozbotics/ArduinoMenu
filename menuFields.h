@@ -226,12 +226,18 @@ class menuPage : public menu {
       menu(label, sz, data) {}
       
     virtual void onEnter(menuOut& p, Stream& c, bool canExit) {
+      menu::onEnter(p, c, canExit);
       this->setPosition(menuNode::activeNode->ox, menuNode::activeNode->oy);
+      
+      
+      /*
       this->menu::previousMenu=(menu*)menu::activeNode;
       menu::activeNode=this;
       this->canExit=canExit;
+      */
     }
-    
+
+/*    
     virtual bool update(menuOut& p, Stream& c, bool canExit) {
       menu::printMenu(p, false);
     }
@@ -255,6 +261,8 @@ class menuPage : public menu {
         onExit(p, c, canExit);
       }
 		}
+*/
+
 };
 
 class timeoutPage : public menuPage { 
@@ -300,7 +308,9 @@ class confirmedTimeoutPage : public timeoutPage {
      */
     virtual void onExit(menuOut& p, Stream& c, bool canExit) {
       this->menu::previousMenu->forceExit = true;
-      this->menu::activeNode=this->menu::previousMenu;
+      
+      menu::onExit(p, c, canExit);
+      //this->menu::activeNode=this->menu::previousMenu;
     }
 };
     

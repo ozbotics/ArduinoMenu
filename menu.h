@@ -230,6 +230,8 @@ class prompt {
     
     virtual bool isMenu() const {return false;}
     static void nothing() {}
+    
+    virtual bool shouldBeEnabled();
 
 };
 
@@ -252,7 +254,9 @@ class menuNode : public prompt {//some basic information for menus and fields
 class menu : public menuNode {
   protected:
     Timer* _timer;
-    static const int refreshDelay = 250;
+    //static const int refreshDelay = 250;
+    //static const int refreshDelay = 100;
+    static const int refreshDelay = 500;
 
   public:
     static char escCode;
@@ -284,13 +288,24 @@ class menu : public menuNode {
       p.printMenu(*this,drawExit);
     }
     
-    
-    
     void activate(menuOut& p,Stream& c,bool canExit=false);
     
     void poll(menuOut& p,Stream& c,bool canExit=false);
    
     virtual bool isMenu() const {return true;}
+    
+    virtual void onEnter(menuOut& p, Stream& c, bool canExit);
+    
+    virtual bool update(menuOut& p, Stream& c, bool canExit);
+    
+    virtual bool shouldExit(menuOut& p, Stream& c, bool canExit);
+    
+    virtual void onExit(menuOut& p, Stream& c, bool canExit);
+    
+    virtual void onExitUp(menuOut& p, Stream& c, bool canExit);
+
+    virtual void onExitDown(menuOut& p, Stream& c, bool canExit, int8_t op);
+
 };
 
 #endif

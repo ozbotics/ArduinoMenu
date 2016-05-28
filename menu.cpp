@@ -34,6 +34,12 @@ prompt menu::exitOption(&labelExit);
 
 menuNode* menuNode::activeNode=NULL;
 
+
+bool prompt::shouldBeEnabled() { 
+  return true; 
+}
+
+
 bool menuOut::needRedraw(menu& m, int8_t i) { 
   return (drawn!=&m) || (top!=lastTop) || ( m.sel!=lastSel && ( (i==m.sel) || (i==lastSel) ) ); 
 }
@@ -65,7 +71,9 @@ int8_t menu::menuKeys(menuOut &p, Stream& c, bool canExit) {
       if ((ch==menu::upCode) && (sel>0)) {
         sel--;
       } 
-      else if ((ch==menu::downCode) && (sel<(sz-(canExit?0:1))) ){
+      //else if ((ch==menu::downCode) && (sel<(sz-(canExit?0:1))) )
+      else if ((ch==menu::downCode) && (sel<(sz-1)) )
+      {
         sel++;
       } 
       else if (ch==menu::escCode) {
@@ -107,6 +115,60 @@ int8_t menu::menuKeys(menuOut &p, Stream& c, bool canExit) {
 }
 
 
+
+void menu::onEnter(menuOut& p, Stream& c, bool canExit) { 
+#ifdef DEBUG_MENU
+  Serial.println(F("activated menu"));
+#endif
+  previousMenu=(menu*)activeNode;
+  activeNode=this;
+  sel=0;
+  p.top=0;
+  this->canExit=canExit;
+  
+  int8_t i=0;
+  for(i=0;i<sz;i++) {
+    data[i]->enabled = data[i]->shouldBeEnabled();
+  }
+  
+}
+
+bool menu::update(menuOut& p, Stream& c, bool canExit) {
+  printMenu(p, false);
+}
+
+bool menu::shouldExit(menuOut& p, Stream& c, bool canExit) {
+  //return true;
+  return false;
+}
+
+void menu::onExit(menuOut& p, Stream& c, bool canExit) {
+}
+
+void menu::onExitUp(menuOut& p, Stream& c, bool canExit) {
+  onExit(p, c, canExit);
+  
+#ifdef DEBUG_MENU
+  Serial.println(F("ascending to parent"));
+#endif
+
+  p.clear();
+  activeNode=previousMenu;
+  c.flush();//reset the encoder
+}
+
+void menu::onExitDown(menuOut& p, Stream& c, bool canExit, int8_t op) {
+  onExit(p, c, canExit);
+  
+#ifdef DEBUG_MENU
+  Serial.println(F("descending to child"));
+#endif
+  printMenu(p, canExit);//clearing old selection
+  data[op]->activate(p, c, true);
+
+}
+
+
 //execute the menu
 //cycle:
 //	...->draw -> input scan -> iterations -> [activate submenu or user function] -> ...
@@ -121,21 +183,14 @@ void menu::activate(menuOut& p, Stream& c, bool canExit) {
     _timer->start(refreshDelay);
   }
 
-	if (activeNode!=this) {
-#ifdef DEBUG_MENU
-    Serial.println(F("activated menu"));
-#endif
-		previousMenu=(menu*)activeNode;
-		activeNode=this;
-		sel=0;
-		p.top=0;
-   	this->canExit=canExit;
-	}
+  if (activeNode!=this) {
+    onEnter(p, c, canExit);
+  }  
+  
+  update(p, c, canExit);
   
   int8_t op=-1;
 
-  printMenu(p, canExit);
-  
   if (forceExit) {
     forceExit = false;
     op=-1;
@@ -150,26 +205,20 @@ void menu::activate(menuOut& p, Stream& c, bool canExit) {
     Serial.println(op);
   }
 #endif
+
+  if (shouldExit(p, c, canExit)) {
+    op=-1;
+  }
   
   if (op>=0 && op<sz) {
   	sel=op;
     if (data[op]->enabled) {
-      // descend to child
-#ifdef DEBUG_MENU
-      Serial.println(F("descending to child"));
-#endif
-      printMenu(p, canExit);//clearing old selection
-    	data[op]->activate(p, c, true);
+      onExitDown(p, c, canExit, op);
     }
   } 
   else if (op==-1) {//then exit
     // ascend to parent
-#ifdef DEBUG_MENU
-    Serial.println(F("ascending to parent"));
-#endif
-    p.clear();
-  	activeNode=previousMenu;
-	 	c.flush();//reset the encoder
+    onExitUp(p, c, canExit);
   }
 }
 
