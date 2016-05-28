@@ -130,10 +130,8 @@ class menuField:public menuNode {
         }
 		  }
       clamp();
-      if (setting->hasChanged() || ch==menu::enterCode) {
-      	p.lastSel=-1;
-      	previousMenu->printMenu(p, previousMenu->canExit);
-      }
+      p.lastSel=-1;
+      previousMenu->printMenu(p, previousMenu->canExit);
 		}
     
 };
