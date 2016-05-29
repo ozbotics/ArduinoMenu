@@ -33,7 +33,7 @@ www.r-site.net
     virtual void setCursor(int8_t x,int8_t y) {lcd.setCursor(x*resX,y*resY);}
     virtual size_t write(uint8_t ch) {return lcd.write(ch);}
 		virtual void printPrompt(prompt &o,bool selected,int8_t idx,int8_t posY,int8_t width) {
-			clearLine(posY);
+			//clearLine(posY);
 			print(selected?(o.enabled?menu::enabledCursor:menu::disabledCursor):' ');
 			o.printTo(*this);
 		}
