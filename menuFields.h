@@ -69,7 +69,7 @@ class menuField:public menuNode {
 			//p.print(text);
 
       
-			p.print(activeNode==this?(tunning?'>':':'):' ');
+			p.print(activeNode==this?(tunning ? prompt::fineTuneCursor : prompt::coarseTuneCursor):' ');
 
       setting->getValueString(buff);
 			p.print(buff);

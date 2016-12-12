@@ -35,6 +35,9 @@ prompt menu::exitOption(&labelExit);
 menuNode* menuNode::activeNode=NULL;
 
 
+char prompt::coarseTuneCursor='=';
+char prompt::fineTuneCursor=':';
+
 bool prompt::shouldBeEnabled() { 
   return enabled; 
 }

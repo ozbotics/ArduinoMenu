@@ -202,6 +202,9 @@ class promptAction {
 //a menu is also a prompt so we can have sub-menus
 class prompt {
   public:
+    static char coarseTuneCursor;
+    static char fineTuneCursor;
+  
     ValueBase* label;
     
     promptAction action;
