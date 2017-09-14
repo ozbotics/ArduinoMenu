@@ -92,6 +92,8 @@ class menuField:public menuNode {
 				activeNode=this;
       	p.lastSel=-1;
       	previousMenu->printMenu(p, previousMenu->canExit);
+
+        setting->setUpdateEnabled(false);
 			}
 			if (!c.available()) return;
 			if (strchr(numericChars, c.peek())) {//a numeric value was entered
@@ -107,7 +109,9 @@ class menuField:public menuNode {
 		    		tunning=false;
 		    		activeNode=previousMenu;
 		    		c.flush();
+            
             setting->persistValue();
+            setting->setUpdateEnabled(true);
 		    	} else tunning=true;
 		    } else if (ch=='+') {
           if ( setting->getValue() + (tunning?tune:step) > setting->getValue() ) {
@@ -123,6 +127,8 @@ class menuField:public menuNode {
         }
 		    else if (ch==menu::escCode) {
           setting->revertValue();
+          setting->setUpdateEnabled(true);
+          
           tunning=false;
           activeNode=previousMenu;
           c.flush();
