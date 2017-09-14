@@ -56,9 +56,10 @@ class menuField:public menuNode {
 		bool tunning;
 		char ch;
 		T tmp;
+    bool rollOver;
 
-		menuField(Value<T> * setting, ValueBase* label, ValueBase* units, T low, T high, T step, T tune=0)
-			:menuNode(label), setting(setting), units(units), low(low), high(high), step(step), tune(tune), tunning(false), ch(0), tmp(0) {}
+		menuField(Value<T> * setting, ValueBase* label, ValueBase* units, T low, T high, T step, T tune=0, bool rollOver=false)
+			:menuNode(label), setting(setting), units(units), low(low), high(high), step(step), tune(tune), tunning(false), ch(0), tmp(0), rollOver(rollOver) {}
       
 		virtual void printTo(menuOut& p) {
       char buff[16];
@@ -79,8 +80,22 @@ class menuField:public menuNode {
 		}
     
 		void clamp() {
-      if (setting->getValue() < low) setting->setValue(low);
-      else if (setting->getValue() > high) setting->setValue(high);
+      if (setting->getValue() < low) {
+        if (rollOver) {
+          setting->setValue(high);        
+        }
+        else {
+          setting->setValue(low);        
+        }
+      }
+      else if (setting->getValue() > high) {
+        if (rollOver) {
+          setting->setValue(low);        
+        }
+        else {
+          setting->setValue(high);        
+        }
+      }
 		}
     
 		//lazy drawing, we have no drawing position here... so we will ask the menu to redraw
